@@ -2,16 +2,16 @@
 
 /* Controllers */
 
-angular.module('myApp.controllers', []).
-    controller('LandingPageController', [function () {
-    }])
-    .controller('WaitlistController', ['$scope', '$firebase', function ($scope, $firebase) {
-        // Connect $scope.parties to live Firebase data.
-        var partiesRef = new Firebase('https://sweltering-inferno-1007.firebaseio.com/parties');
+angular.module('myApp.controllers', [])
+    .controller('LandingPageController', [function () {
 
+    }])
+    .controller('WaitlistController', ['$scope', '$firebase', 'FIREBASE_URL', function ($scope, $firebase, FIREBASE_URL) {
+        // Connect $scope.parties to live Firebase data
+        var partiesRef = new Firebase(FIREBASE_URL + 'parties');
         $scope.parties = $firebase(partiesRef);
 
-        // Object to store data from waitlist form.
+        // Object to store data from the waitlist form.
         $scope.newParty = {name: '', phone: '', size: '', done: false, notified: 'No'};
 
         // Function to save a new party to the waitlist.
@@ -20,8 +20,9 @@ angular.module('myApp.controllers', []).
             $scope.newParty = {name: '', phone: '', size: '', done: false, notified: 'No'};
         };
 
+        // Function to send a text message to a party.
         $scope.sendTextMessage = function (party) {
-            var textMessageRef = new Firebase('https://sweltering-inferno-1007.firebaseio.com/text');
+            var textMessageRef = new Firebase(FIREBASE_URL + 'textMessages');
             var textMessages = $firebase(textMessageRef);
             var newTextMessage = {
                 phoneNumber: party.phone,
@@ -29,34 +30,27 @@ angular.module('myApp.controllers', []).
                 name: party.name
             };
             textMessages.$add(newTextMessage);
-            party.notified = "Yes";
+            party.notified = 'Yes';
             $scope.parties.$save(party.$id);
         };
     }])
-    .controller('AuthController', ['$scope', '$firebaseSimpleLogin', '$location',
-        function ($scope, $firebaseSimpleLogin, $location) {
-            var authRef = new Firebase('https://sweltering-inferno-1007.firebaseio.com');
-            var auth = $firebaseSimpleLogin(authRef);
+    .controller('AuthController', ['$scope', 'authService', function ($scope, authService) {
+        // Object bound to inputs on the register and login pages.
+        $scope.user = {email: '', password: ''};
 
-            $scope.user = {email: '', password: ''}
+        // Method to register a new user using the authService.
+        $scope.register = function () {
+            authService.register($scope.user);
+        };
 
-            $scope.register = function () {
-                auth.$createUser($scope.user.email, $scope.user.password).then(function (data) {
-                    console.log(data);
-                    $scope.$login();
-                });
-            };
+        // Method to log in a user using the authService.
+        $scope.login = function () {
+            authService.login($scope.user);
+        };
 
-            $scope.login = function () {
-                auth.$login('password', $scope.user).then(function (data) {
-                    console.log(data);
-                    $location.path("/waitlist");
-                });
-            };
+        // Method to log out user using the authService.
+        $scope.logout = function () {
+            authService.logout();
+        };
 
-            $scope.logout = function () {
-                auth.$logout();
-                $location.path("/");
-            };
-        }])
-;
+    }]);
