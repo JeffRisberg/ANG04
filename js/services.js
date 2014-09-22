@@ -4,6 +4,47 @@
 
 angular.module('myApp.services', [])
     .value('FIREBASE_URL', 'https://sweltering-inferno-1007.firebaseio.com/')
+
+    .factory('dataService', function ($firebase, FIREBASE_URL) {
+        var dataRef = new Firebase(FIREBASE_URL);
+        var fireData = $firebase(dataRef);
+
+        return fireData;
+    })
+
+    .factory('partyService', function (dataService) {
+        var parties = dataService.$child('parties');
+
+        var partyServiceObject = {
+            parties: parties,
+            saveParty: function (party) {
+                parties.$add(party);
+            }
+        };
+
+        return partyServiceObject;
+    })
+
+    .factory('textMessageService', function (dataService, partyService) {
+        var textMessages = dataService.$child('textMessages');
+
+        var textMessageServiceObject = {
+            sendTextMessage: function (party) {
+                var newTextMessage = {
+                    phoneNumber: party.phone,
+                    size: party.size,
+                    name: party.name
+                };
+
+                textMessages.$add(newTextMessage);
+                party.notified = 'Yes';
+                partyService.parties.$save(party.$id);
+            }
+        };
+
+        return textMessageServiceObject;
+    })
+
     .factory('authService', function ($firebaseSimpleLogin, $location, $rootScope, FIREBASE_URL) {
         var authRef = new Firebase(FIREBASE_URL);
         var auth = $firebaseSimpleLogin(authRef);
@@ -27,13 +68,11 @@ angular.module('myApp.services', [])
             }
         };
 
-        $rootScope.$on("$firebaseSimpleLogin:login", function(e, user) {
-            console.log("user login");
+        $rootScope.$on("$firebaseSimpleLogin:login", function (e, user) {
             $rootScope.currentUser = user;
         });
 
-        $rootScope.$on("$firebaseSimpleLogin:logout", function() {
-            console.log("user logout");
+        $rootScope.$on("$firebaseSimpleLogin:logout", function () {
             $rootScope.currentUser = null;
         });
 
