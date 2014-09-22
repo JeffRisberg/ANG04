@@ -4,7 +4,6 @@
 
 angular.module('myApp.controllers', []).
     controller('LandingPageController', [function () {
-        console.log("LandingPageController");
     }])
     .controller('WaitlistController', ['$scope', '$firebase', function ($scope, $firebase) {
         // Connect $scope.parties to live Firebase data.
@@ -38,22 +37,22 @@ angular.module('myApp.controllers', []).
         var authRef = new Firebase('https://waitandeat-sergio.firebaseio.com/textMessages');
         var auth = $firebaseSimpleLogin(authRef);
 
-        $scope.user = {email: '', password: ''};
+        $scope.user = {email: '', password: ''}
 
-        $scope.register = function () {
-            auth.$createUser($scope.user.email, $scope.user.password).then(function (data) {
+        $scope.register = function() {
+            auth.$createUser($scope.user.email, $scope.user.password).then(function(data) {
                 console.log(data);
                 auth.$login('password', $scope.user);
             });
         };
 
-        $scope.login = function () {
-            auth.$login('password', $scope.user).then(function (data) {
+        $scope.login = function() {
+            auth.$login('password', $scope.user).then(function(data) {
                 console.log(data);
             });
         };
 
-        $scope.logout = function () {
+        $scope.logout = function() {
             auth.$logout();
         };
     }]);
