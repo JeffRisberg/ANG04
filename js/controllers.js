@@ -6,17 +6,54 @@ angular.module('myApp.controllers', []).
     controller('LandingPageController', [function () {
         console.log("LandingPageController");
     }])
-    .controller('WaitlistController', ['$scope',  function ($scope) {
+    .controller('WaitlistController', ['$scope', '$firebase', function ($scope, $firebase) {
         // Connect $scope.parties to live Firebase data.
-        //var partiesRef = new Firebase('https://waitandeat-sergio.firebaseio.com/parties');
-        $scope.parties = []; //$firebase(partiesRef);
+        var partiesRef = new Firebase('https://sweltering-inferno-1007.firebaseio.com/parties');
+
+        $scope.parties = $firebase(partiesRef);
 
         // Object to store data from waitlist form.
         $scope.newParty = {name: '', phone: '', size: '', done: false, notified: 'No'};
 
         // Function to save a new party to the waitlist.
         $scope.saveParty = function () {
-            $scope.parties.push($scope.newParty);
+            $scope.parties.$add($scope.newParty);
             $scope.newParty = {name: '', phone: '', size: '', done: false, notified: 'No'};
+        };
+
+        $scope.sendTextMessage = function (party) {
+            var textMessageRef = new Firebase('https://sweltering-inferno-1007.firebaseio.com/text');
+            var textMessages = $firebase(textMessageRef);
+            var newTextMessage = {
+                phoneNumber: party.phone,
+                size: party.size,
+                name: party.name
+            };
+            textMessages.$add(newTextMessage);
+            party.notified = "Yes";
+            $scope.parties.$save(party.$id);
+        };
+    }])
+    .controller('AuthController', ['$scope', '$firebaseSimpleLogin', function ($scope, $firebaseSimpleLogin) {
+        var authRef = new Firebase('https://waitandeat-sergio.firebaseio.com/textMessages');
+        var auth = $firebaseSimpleLogin(authRef);
+
+        $scope.user = {email: '', password: ''};
+
+        $scope.register = function () {
+            auth.$createUser($scope.user.email, $scope.user.password).then(function (data) {
+                console.log(data);
+                auth.$login('password', $scope.user);
+            });
+        };
+
+        $scope.login = function () {
+            auth.$login('password', $scope.user).then(function (data) {
+                console.log(data);
+            });
+        };
+
+        $scope.logout = function () {
+            auth.$logout();
         };
     }]);
